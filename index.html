@@ -1,0 +1,567 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gram Bazaar | Smart Village</title>
+
+<style>
+:root {
+  --green: #197447;
+  --light: #eef7ef;
+  --orange: #f4a340;
+  --dark: #20332a;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f7f9f6;
+  color: var(--dark);
+}
+header {
+  background: var(--green);
+  color: white;
+  padding: 18px 6%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+header h1 { margin: 0; font-size: 25px; }
+nav { display: flex; flex-wrap: wrap; gap: 8px; }
+button, nav a {
+  border: 0;
+  border-radius: 7px;
+  padding: 10px 14px;
+  cursor: pointer;
+  text-decoration: none;
+  font-size: 14px;
+}
+nav a { color: white; }
+nav a:hover { background: #ffffff24; }
+.hero {
+  padding: 45px 6%;
+  background: linear-gradient(120deg, #e2f4df, #fff2dc);
+}
+.hero h2 { font-size: clamp(28px, 4vw, 42px); margin: 0 0 12px; }
+.hero p { line-height: 1.7; max-width: 650px; }
+.primary { background: var(--green); color: white; }
+.secondary { background: var(--orange); color: #222; }
+section { padding: 28px 6%; }
+.section-title { margin-top: 0; }
+.stats, .products {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 16px;
+}
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: 0 3px 12px #183d2410;
+}
+.stat-number { font-size: 28px; font-weight: bold; color: var(--green); }
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+input, select, textarea {
+  padding: 11px;
+  border: 1px solid #ccd7cd;
+  border-radius: 7px;
+  font: inherit;
+  max-width: 100%;
+}
+.controls input { flex: 1; min-width: 180px; }
+.product-emoji { font-size: 48px; text-align: center; padding: 10px; }
+.price { color: var(--green); font-size: 21px; font-weight: bold; }
+.product-card button { margin: 4px 2px 0 0; }
+form { display: grid; gap: 12px; max-width: 550px; }
+.form-row { display: grid; gap: 5px; }
+.notice { background: #fff4d9; padding: 14px; border-radius: 8px; }
+footer {
+  text-align: center;
+  background: #173d2b;
+  color: white;
+  padding: 22px;
+  margin-top: 25px;
+}
+.hidden { display: none !important; }
+.small { color: #66766b; font-size: 13px; }
+#cartItems, #orderList { display: grid; gap: 10px; }
+.cart-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid #eee;
+  padding: 10px 0;
+}
+@media(max-width:600px) {
+  header { padding: 16px; }
+  section { padding: 22px 16px; }
+  .hero { padding: 32px 16px; }
+}
+</style>
+</head>
+
+<body>
+<header>
+  <h1>🌿 Gram Bazaar</h1>
+  <nav>
+    <a href="#home">Home</a>
+    <a href="#bazaar">Bazaar</a>
+    <a href="#village">Smart Village</a>
+    <a href="#seller">Seller</a>
+    <a href="#orders">Orders</a>
+    <a href="#cart">Cart 🛒 <span id="cartCount">0</span></a>
+  </nav>
+</header>
+
+<div class="hero" id="home">
+  <h2 id="heroTitle">Smart Village, Better Future!</h2>
+  <p id="heroText">
+    Buy local products, support village sellers and explore
+    smart village resources—all in one place.
+  </p>
+  <button class="primary" onclick="goTo('bazaar')">Explore Bazaar</button>
+  <button class="secondary" onclick="goTo('village')">Village Dashboard</button>
+  <div style="margin-top:18px">
+    <button onclick="setLanguage('en')">English</button>
+    <button onclick="setLanguage('hi')">हिंदी</button>
+    <button onclick="setLanguage('mr')">मराठी</button>
+  </div>
+</div>
+
+<section>
+  <h2 class="section-title">📊 Village Dashboard</h2>
+  <div class="stats">
+    <div class="card">
+      <p>Products Available</p>
+      <div class="stat-number" id="productCount">0</div>
+    </div>
+    <div class="card">
+      <p>Orders Placed</p>
+      <div class="stat-number" id="orderCount">0</div>
+    </div>
+    <div class="card">
+      <p>Cart Items</p>
+      <div class="stat-number" id="dashboardCart">0</div>
+    </div>
+    <div class="card">
+      <p>Village Resources</p>
+      <div class="stat-number">4</div>
+    </div>
+  </div>
+</section>
+
+<section id="bazaar">
+  <h2 class="section-title">🛍️ Gram Bazaar</h2>
+  <p>Local products direct from village sellers.</p>
+
+  <div class="controls">
+    <input id="search" placeholder="Search products..." oninput="renderProducts()">
+    <select id="category" onchange="renderProducts()">
+      <option value="All">All Categories</option>
+      <option>Vegetables</option>
+      <option>Fruits</option>
+      <option>Grains</option>
+      <option>Dairy</option>
+      <option>Handicrafts</option>
+      <option>Farm Supplies</option>
+    </select>
+    <select id="sort" onchange="renderProducts()">
+      <option value="default">Sort by</option>
+      <option value="low">Price: Low to High</option>
+      <option value="high">Price: High to Low</option>
+    </select>
+  </div>
+
+  <div class="products" id="productGrid"></div>
+</section>
+
+<section id="cart">
+  <h2 class="section-title">🛒 Shopping Cart</h2>
+  <div class="card">
+    <div id="cartItems">Your cart is empty.</div>
+    <hr>
+    <h3>Total: ₹<span id="cartTotal">0</span></h3>
+    <button class="primary" onclick="goTo('checkout')">Proceed to Checkout</button>
+    <button onclick="clearCart()">Clear Cart</button>
+  </div>
+</section>
+
+<section id="checkout">
+  <h2 class="section-title">📦 Checkout</h2>
+  <div class="card">
+    <p class="notice">
+      Demo checkout: Cash on Delivery (COD) only.
+      No real payment will be collected.
+    </p>
+    <form id="checkoutForm">
+      <div class="form-row">
+        <label for="customerName">Full Name</label>
+        <input id="customerName" required>
+      </div>
+      <div class="form-row">
+        <label for="phone">Phone Number</label>
+        <input id="phone" type="tel" required>
+      </div>
+      <div class="form-row">
+        <label for="address">Delivery Address / Village</label>
+        <textarea id="address" required></textarea>
+      </div>
+      <button class="primary" type="submit">Place COD Order</button>
+    </form>
+    <p id="checkoutMessage" role="status"></p>
+  </div>
+</section>
+
+<section id="seller">
+  <h2 class="section-title">👨‍🌾 Seller Panel</h2>
+  <div class="card">
+    <p>Add your village product to the bazaar.</p>
+    <form id="sellerForm">
+      <div class="form-row">
+        <label for="productName">Product Name</label>
+        <input id="productName" required>
+      </div>
+      <div class="form-row">
+        <label for="productPrice">Price (₹)</label>
+        <input id="productPrice" type="number" min="1" step="0.01" required>
+      </div>
+      <div class="form-row">
+        <label for="productCategory">Category</label>
+        <select id="productCategory">
+          <option>Vegetables</option>
+          <option>Fruits</option>
+          <option>Grains</option>
+          <option>Dairy</option>
+          <option>Handicrafts</option>
+          <option>Farm Supplies</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label for="productEmoji">Product Icon (emoji)</label>
+        <input id="productEmoji" value="📦" maxlength="8">
+      </div>
+      <button class="primary" type="submit">Add Product</button>
+    </form>
+    <p class="small">Demo panel: seller login and approval are not included.</p>
+  </div>
+</section>
+
+<section id="orders">
+  <h2 class="section-title">📋 My Orders</h2>
+  <div id="orderList" class="card">No orders placed yet.</div>
+</section>
+
+<section id="village">
+  <h2 class="section-title">🏡 Smart Village Resources</h2>
+  <div class="stats">
+    <div class="card">
+      <div class="product-emoji">💧</div>
+      <h3>Water Management</h3>
+      <p>Track water availability and conservation notices.</p>
+      <p>Status: <strong>Demo data</strong></p>
+    </div>
+    <div class="card">
+      <div class="product-emoji">⚡</div>
+      <h3>Electricity</h3>
+      <p>Village electricity updates and saving tips.</p>
+      <p>Status: <strong>Demo data</strong></p>
+    </div>
+    <div class="card">
+      <div class="product-emoji">🌱</div>
+      <h3>Agriculture</h3>
+      <p>Seasonal farming reminders and crop-care tips.</p>
+      <p>Status: <strong>General information</strong></p>
+    </div>
+    <div class="card">
+      <div class="product-emoji">📢</div>
+      <h3>Announcements</h3>
+      <p>Village meetings, local news and community notices.</p>
+      <p>Status: <strong>Demo notice board</strong></p>
+    </div>
+  </div>
+  <p class="notice">
+    Note: Resource readings are examples, not live sensor data.
+    This version does not connect to real AI services.
+  </p>
+</section>
+
+<footer>
+  <p>🌿 Gram Bazaar — AI-Based Smart Village Resources Management System</p>
+  <p class="small" style="color:#e0e9e1">
+    Student project demo | Built with HTML, CSS and JavaScript
+  </p>
+</footer>
+
+<script>
+const initialProducts = [
+  {id:1, name:"Fresh Tomatoes", price:30, category:"Vegetables", emoji:"🍅"},
+  {id:2, name:"Organic Potatoes", price:25, category:"Vegetables", emoji:"🥔"},
+  {id:3, name:"Fresh Mangoes", price:80, category:"Fruits", emoji:"🥭"},
+  {id:4, name:"Village Bananas", price:40, category:"Fruits", emoji:"🍌"},
+  {id:5, name:"Wheat (1 kg)", price:35, category:"Grains", emoji:"🌾"},
+  {id:6, name:"Rice (1 kg)", price:60, category:"Grains", emoji:"🍚"},
+  {id:7, name:"Fresh Milk (1 L)", price:55, category:"Dairy", emoji:"🥛"},
+  {id:8, name:"Handmade Basket", price:150, category:"Handicrafts", emoji:"🧺"},
+  {id:9, name:"Garden Seeds", price:45, category:"Farm Supplies", emoji:"🌱"}
+];
+
+function load(key, fallback) {
+  try {
+    const value = localStorage.getItem(key);
+    return value ? JSON.parse(value) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+let products = load("gb_products", initialProducts);
+let cart = load("gb_cart", []);
+let orders = load("gb_orders", []);
+let favorites = load("gb_favorites", []);
+
+function saveData() {
+  localStorage.setItem("gb_products", JSON.stringify(products));
+  localStorage.setItem("gb_cart", JSON.stringify(cart));
+  localStorage.setItem("gb_orders", JSON.stringify(orders));
+  localStorage.setItem("gb_favorites", JSON.stringify(favorites));
+}
+
+function goTo(id) {
+  document.getElementById(id).scrollIntoView({behavior:"smooth"});
+}
+
+function renderProducts() {
+  const query = document.getElementById("search").value.toLowerCase();
+  const category = document.getElementById("category").value;
+  const sort = document.getElementById("sort").value;
+
+  let list = products.filter(p =>
+    p.name.toLowerCase().includes(query) &&
+    (category === "All" || p.category === category)
+  );
+
+  if (sort === "low") list.sort((a,b) => a.price-b.price);
+  if (sort === "high") list.sort((a,b) => b.price-a.price);
+
+  const grid = document.getElementById("productGrid");
+
+  if (!list.length) {
+    grid.innerHTML = "<p>No products found. Try another search.</p>";
+  } else {
+    grid.innerHTML = list.map(p => `
+      <div class="card product-card">
+        <div class="product-emoji">${escapeHTML(p.emoji)}</div>
+        <h3>${escapeHTML(p.name)}</h3>
+        <p>${escapeHTML(p.category)}</p>
+        <div class="price">₹${Number(p.price).toFixed(2)}</div>
+        <button class="primary" onclick="addToCart(${p.id})">Add to Cart</button>
+        <button onclick="toggleFavorite(${p.id})">
+          ${favorites.includes(p.id) ? "♥ Saved" : "♡ Wishlist"}
+        </button>
+      </div>
+    `).join("");
+  }
+  updateDashboard();
+}
+
+function escapeHTML(value) {
+  return String(value).replace(/[&<>"']/g, char => ({
+    "&":"&amp;", "<":"&lt;", ">":"&gt;",
+    '"':"&quot;", "'":"&#39;"
+  })[char]);
+}
+
+function addToCart(id) {
+  const item = cart.find(p => p.id === id);
+  if (item) item.quantity++;
+  else cart.push({id, quantity:1});
+  saveData();
+  renderCart();
+  renderProducts();
+}
+
+function toggleFavorite(id) {
+  favorites = favorites.includes(id)
+    ? favorites.filter(f => f !== id)
+    : [...favorites, id];
+  saveData();
+  renderProducts();
+}
+
+function renderCart() {
+  const container = document.getElementById("cartItems");
+  let total = 0;
+  let count = 0;
+
+  if (!cart.length) {
+    container.textContent = "Your cart is empty.";
+  } else {
+    container.innerHTML = cart.map(item => {
+      const p = products.find(x => x.id === item.id);
+      if (!p) return "";
+      total += p.price * item.quantity;
+      count += item.quantity;
+      return `
+        <div class="cart-row">
+          <span>${escapeHTML(p.emoji)} ${escapeHTML(p.name)}
+            × ${item.quantity}</span>
+          <span>₹${(p.price * item.quantity).toFixed(2)}
+            <button onclick="changeQuantity(${p.id},-1)">−</button>
+            <button onclick="changeQuantity(${p.id},1)">+</button>
+          </span>
+        </div>`;
+    }).join("");
+  }
+
+  document.getElementById("cartTotal").textContent = total.toFixed(2);
+  document.getElementById("cartCount").textContent = count;
+  document.getElementById("dashboardCart").textContent = count;
+}
+
+function changeQuantity(id, delta) {
+  const item = cart.find(p => p.id === id);
+  if (!item) return;
+  item.quantity += delta;
+  if (item.quantity <= 0) cart = cart.filter(p => p.id !== id);
+  saveData();
+  renderCart();
+}
+
+function clearCart() {
+  cart = [];
+  saveData();
+  renderCart();
+  renderProducts();
+}
+
+document.getElementById("sellerForm").addEventListener("submit", event => {
+  event.preventDefault();
+
+  const name = document.getElementById("productName").value.trim();
+  const price = Number(document.getElementById("productPrice").value);
+  const category = document.getElementById("productCategory").value;
+  const emoji = document.getElementById("productEmoji").value.trim() || "📦";
+
+  if (!name || !Number.isFinite(price) || price <= 0) {
+    alert("Enter a valid product name and price.");
+    return;
+  }
+
+  products.push({
+    id: Date.now(),
+    name, price, category, emoji
+  });
+
+  saveData();
+  event.target.reset();
+  document.getElementById("productEmoji").value = "📦";
+  renderProducts();
+  alert("Product added to the demo bazaar!");
+  goTo("bazaar");
+});
+
+document.getElementById("checkoutForm").addEventListener("submit", event => {
+  event.preventDefault();
+
+  if (!cart.length) {
+    alert("Please add products to your cart first.");
+    goTo("bazaar");
+    return;
+  }
+
+  const name = document.getElementById("customerName").value.trim();
+  const phone = document.getElementById("phone").value.trim();
+  const address = document.getElementById("address").value.trim();
+
+  if (!name || !phone || !address) {
+    alert("Please fill all delivery details.");
+    return;
+  }
+
+  const items = cart.map(item => {
+    const p = products.find(x => x.id === item.id);
+    return p ? {
+      name:p.name, price:p.price, quantity:item.quantity
+    } : null;
+  }).filter(Boolean);
+
+  const total = items.reduce((sum, p) =>
+    sum + p.price * p.quantity, 0);
+
+  orders.unshift({
+    id: "GB" + Date.now().toString().slice(-8),
+    name, phone, address, items, total,
+    status:"Order Placed",
+    date:new Date().toLocaleString()
+  });
+
+  cart = [];
+  saveData();
+  renderCart();
+  renderOrders();
+  renderProducts();
+  event.target.reset();
+
+  document.getElementById("checkoutMessage").textContent =
+    "Demo order placed successfully! No payment was collected.";
+  goTo("orders");
+});
+
+function renderOrders() {
+  const box = document.getElementById("orderList");
+  if (!orders.length) {
+    box.textContent = "No orders placed yet.";
+  } else {
+    box.innerHTML = orders.map(o => `
+      <div class="card">
+        <h3>Order #${escapeHTML(o.id)}</h3>
+        <p><strong>Customer:</strong> ${escapeHTML(o.name)}</p>
+        <p><strong>Date:</strong> ${escapeHTML(o.date)}</p>
+        <p><strong>Items:</strong> ${o.items.map(i =>
+          escapeHTML(i.name) + " × " + i.quantity
+        ).join(", ")}</p>
+        <p><strong>Total:</strong> ₹${o.total.toFixed(2)}</p>
+        <p><strong>Status:</strong> ${escapeHTML(o.status)}</p>
+        <p class="small">Delivery: ${escapeHTML(o.address)}</p>
+      </div>
+    `).join("");
+  }
+  document.getElementById("orderCount").textContent = orders.length;
+}
+
+function updateDashboard() {
+  document.getElementById("productCount").textContent = products.length;
+  document.getElementById("orderCount").textContent = orders.length;
+}
+
+function setLanguage(language) {
+  const translations = {
+    en: ["Smart Village, Better Future!",
+      "Buy local products, support village sellers and explore smart village resources—all in one place."],
+    hi: ["स्मार्ट गाँव, बेहतर भविष्य!",
+      "स्थानीय उत्पाद खरीदें, गाँव के विक्रेताओं का समर्थन करें और गाँव के संसाधनों की जानकारी पाएँ।"],
+    mr: ["स्मार्ट गाव, उज्ज्वल भविष्य!",
+      "स्थानिक उत्पाद खरेदी करा आणि गावातील विक्रेत्यांना सहकार्य करा."]
+  };
+
+  document.getElementById("heroTitle").textContent = translations[language][0];
+  document.getElementById("heroText").textContent = translations[language][1];
+}
+
+renderProducts();
+renderCart();
+renderOrders();
+</script>
+</body>
+</html>
